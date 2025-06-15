@@ -6,9 +6,11 @@ ID: CT6WDS2451
 Domain: Artificial Intelligence
 Duration: November 25th, 2024 to January 10th, 2025
 
+Overview of the Project:
+
 Project: Sentiment Analysis on Hotel Reviews
 
-Overview of the Project:
+Introduction:
 
 Sentiment analysis, also known as opinion mining, involves determining the sentiment expressed in a piece of text. It is a crucial task in natural language processing (NLP) with applications in various domains, including customer feedback analysis, product reviews, and social media monitoring. In this project, we analyze hotel reviews to classify them as "Good" or "Bad" based on their content using a deep learning approach.
 
