@@ -1,0 +1,157 @@
+!nvidia-smi 
+!pip install gdown 
+!pip install tensorflow_text 
+!pip install wordcloud 
+!pip install tensorflow-gpu 
+import numpy as np 
+import tensorflow as tf 
+from tensorflow import keras 
+import pandas as pd 
+import seaborn as sns 
+from pylab import rcParams 
+from tqdm import tqdm 
+import matplotlib.pyplot as plt 
+from matplotlib import rc 
+from pandas.plotting import register_matplotlib_converters 
+from sklearn.model_selection import train_test_split 
+import tensorflow_hub as hub 
+import tensorflow_text 
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator 
+%matplotlib inline 
+%config InlineBackend.figure_format='retina' 
+register_matplotlib_converters() 
+sns.set(style='whitegrid', palette='muted', font_scale=1.2) 
+HAPPY_COLORS_PALETTE = ["#01BEFE", "#FFDD00", "#FF7D00", "#FF006D", "#ADFF02", 
+"#8F00FF"] 
+sns.set_palette(sns.color_palette(HAPPY_COLORS_PALETTE)) 
+rcParams['figure.figsize'] = 12, 8 
+RANDOM_SEED = 42 
+np.random.seed(RANDOM_SEED) 
+tf.random.set_seed(RANDOM_SEED) 
+df = pd.read_csv("Hotel_Reviews.csv", parse_dates=['Review_Date']) 
+df.shape 
+df["review"] = df["Negative_Review"] + df["Positive_Review"] 
+df["review_type"] = df["Reviewer_Score"].apply( 
+lambda x: "bad" if x < 7 else "good" 
+) 
+df = df[["review", "review_type"]] 
+df.review_type.value_counts()
+sns.countplot( 
+x='review_type', 
+data=df, 
+order=df.review_type.value_counts().index 
+) 
+plt.xlabel("type") 
+plt.title("Review type");
+good_reviews = df[df.review_type == "good"] 
+bad_reviews = df[df.review_type == "bad"] 
+print(good_reviews.shape, bad_reviews.shape) 
+good_reviews_text = " ".join(good_reviews.review.to_numpy().tolist()) 
+bad_reviews_text = " ".join(bad_reviews.review.to_numpy().tolist()) 
+good_reviews_cloud = WordCloud(stopwords=STOPWORDS, 
+background_color="white").generate(good_reviews_text) 
+bad_reviews_cloud = WordCloud(stopwords=STOPWORDS, 
+background_color="white").generate(bad_reviews_text) 
+def show_word_cloud(cloud, title): 
+plt.figure(figsize = (16, 10)) 
+plt.imshow(cloud, interpolation='bilinear') 
+plt.title(title) 
+plt.axis("off") 
+plt.show(); 
+show_word_cloud(good_reviews_cloud, "Good reviews common words") 
+show_word_cloud(bad_reviews_cloud, "Bad reviews common words")
+good_df = good_reviews.sample(n=len(bad_reviews), random_state=RANDOM_SEED) 
+bad_df = bad_reviews 
+review_df = good_df.append(bad_df).reset_index(drop=True) 
+review_df.shape 
+sns.countplot( 
+x='review_type', 
+data=review_df, 
+order=review_df.review_type.value_counts().index 
+) 
+plt.xlabel("type") 
+plt.title("Review type (resampled)");
+use = hub.load("https://tfhub.dev/google/universal-sentence-encoder-multilingual-large/3") 
+sent_1 = ["the location is great"] 
+sent_2 = ["amazing location"] 
+emb_1 = use(sent_1) 
+emb_2 = use(sent_2) 
+emb_1.shape
+np.inner(emb_1, emb_2).flatten()[0] 
+from sklearn.preprocessing import OneHotEncoder 
+type_one_hot = OneHotEncoder(sparse=False).fit_transform( 
+review_df.review_type.to_numpy().reshape(-1, 1) 
+) 
+train_reviews, test_reviews, y_train, y_test =\ 
+train_test_split( 
+review_df.review, 
+type_one_hot, 
+test_size=.1, 
+random_state=RANDOM_SEED 
+) 
+X_train = [] 
+for r in tqdm(train_reviews): 
+emb = use(r) 
+review_emb = tf.reshape(emb, [-1]).numpy() 
+X_train.append(review_emb) 
+X_train = np.array(X_train) 
+X_test = [] 
+for r in tqdm(test_reviews): 
+emb = use(r) 
+review_emb = tf.reshape(emb, [-1]).numpy() 
+X_test.append(review_emb) 
+X_test = np.array(X_test) 
+print(X_train.shape, X_test.shape)
+print(X_train.shape, y_train.shape) 
+model = keras.Sequential() 
+model.add( 
+keras.layers.Dense( 
+units=256, 
+input_shape=(X_train.shape[1], ), 
+activation='relu' 
+) 
+) 
+model.add( 
+keras.layers.Dropout(rate=0.5) 
+) 
+model.add( 
+keras.layers.Dense( 
+units=128, 
+activation='relu' 
+) 
+) 
+model.add( 
+keras.layers.Dropout(rate=0.5) 
+) 
+model.add(keras.layers.Dense(2, activation='softmax')) 
+model.compile( 
+loss='categorical_crossentropy', 
+optimizer=keras.optimizers.Adam(0.001), 
+metrics=['accuracy'] 
+) 
+history = model.fit( 
+X_train, y_train, 
+epochs=10, 
+batch_size=16, 
+validation_split=0.1, 
+verbose=1, 
+shuffle=True 
+) 
+plt.plot(history.history['loss'], label='train loss') 
+plt.plot(history.history['val_loss'], label='val loss') 
+plt.xlabel("epoch") 
+plt.ylabel("Cross-entropy loss") 
+plt.legend(); 
+plt.plot(history.history['accuracy'], label='train accuracy') 
+plt.plot(history.history['val_accuracy'], label='val accuracy') 
+plt.xlabel("epoch") 
+plt.ylabel("accuracy") 
+plt.legend(); 
+model.evaluate(X_test, y_test) 
+print(test_reviews.iloc[0]) 
+print("Bad" if y_test[0][0] == 1 else "Good") 
+y_pred = model.predict(X_test[:1]) 
+print(y_pred) 
+"Bad" if np.argmax(y_pred) == 0 else "Good" 
+print(test_reviews.iloc[1]) 
+print("Bad" if y_test[1][0] == 1 else "Good")
