@@ -23,6 +23,22 @@ Objectives:
 
 Key Activities:
 
+Data Loading:	CSV file Hotel_Reviews.csv 
+Data Preprocessing	- Combined positive and negative reviews into one field
+                   - Labeled each review as 'good' or 'bad' based on Reviewer_Score
+Exploratory Analysis	- Count of each label visualized
+                     - Word clouds for good and bad reviews generated
+Balancing Dataset: Equalized good and bad review counts by sampling
+Embedding Generation:	Reviews converted to 512-dimensional vectors using USE
+Model Building	- Neural network with 2 hidden layers and dropout
+               - Trained using categorical_crossentropy loss
+Model Evaluation	- Accuracy and loss tracked across epochs
+                 - Evaluated on test set
+                 - Manual predictions on sample inputs
+Prediction & Testing: 	Printed raw review text, actual label, predicted probabilities, and final class label
+
 Technologies Used:
 
-Key Insights:
+Programmimg Language: Python
+Libraries: TensorFlow/Keras, TensorFlow Hub, TensorFlow, Pandas, NumPy, Matplotlib, Seaborn, WordCloud, Scikit-learn, TQDM
+
