@@ -10,7 +10,8 @@ Duration: November 25th, 2024 to January 10th, 2025
 
 Overview of the Project:
 
-Project: Sentiment Analysis on Hotel Reviews
+Project: SENTIMENT ANALYSIS ON HOTEL REVIEWS
+
 ![Screenshot 2025-06-15 175124](https://github.com/user-attachments/assets/0233b3ec-29c1-4d5b-a203-c14e2c6ffb32)
 
 ![Screenshot 2025-06-15 175141](https://github.com/user-attachments/assets/3abc1300-1682-4d47-ba4c-0a9213ab3403)
